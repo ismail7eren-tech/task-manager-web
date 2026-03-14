@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+
+<meta charset="UTF-8">
+<title>Pro Task Manager</title>
+
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+</head>
+
+<body>
+
+<div class="app">
+
+<div class="top-bar">
+
+<h1>Task Manager</h1>
+
+<button onclick="toggleTheme()">🌙</button>
+
+</div>
+
+<div class="stats">
+
+<div>Toplam: {{ total }}</div>
+
+<div>Tamamlanan: {{ completed }}</div>
+
+<div>% {{ percent }}</div>
+
+</div>
+
+<div class="progress">
+
+<div class="bar" style="width: {{percent}}%"></div>
+
+</div>
+
+<form action="/" method="GET" class="search">
+
+<input type="text" name="search" placeholder="Görev ara...">
+
+</form>
+
+<form action="/add" method="POST" class="task-form">
+
+<input type="text" name="task" placeholder="Yeni görev..." required>
+
+<select name="priority">
+
+<option>Düşük</option>
+<option selected>Normal</option>
+<option>Acil</option>
+
+</select>
+
+<input type="date" name="deadline">
+
+<button>Ekle</button>
+
+</form>
+
+<ul class="task-list">
+
+{% for task in tasks %}
+
+<li class="task-item priority-{{task.priority}} {% if task.completed %}done{% endif %}">
+
+<a href="/complete/{{task.id}}" class="check">✔</a>
+
+<div class="task-text">
+
+<div class="content">{{task.content}}</div>
+
+<div class="meta">
+
+<span class="badge">{{task.priority}}</span>
+
+<span>{{task.deadline}}</span>
+
+</div>
+
+</div>
+
+<a href="/delete/{{task.id}}" class="delete">✕</a>
+
+</li>
+
+{% endfor %}
+
+</ul>
+
+</div>
+
+<script>
+
+function toggleTheme(){
+
+document.body.classList.toggle("light")
+
+}
+
+</script>
+
+</body>
+</html>
