@@ -1,0 +1,796 @@
+:root {
+    /* Aga bütün renkleri falan buraya yığdım. Sonradan tek tek kodun içinde renk aramayayım diye CSS Variable (şu -- olanlar) kullandım. Baya rahatlık. */
+    --bg-base: #060913;
+    --bg-gradient: radial-gradient(circle at top left, #1a153a 0%, #060913 60%);
+
+    /* Cam efektinin saydamlık ayarları falan */
+    --glass-bg: rgba(26, 30, 50, 0.4);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+
+    /* Bizim o tatlı mor/mavi rengimiz */
+    --primary: #6366f1;
+    --primary-hover: #818cf8;
+    --primary-glow: rgba(99, 102, 241, 0.4);
+
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    /* Bu da gri gibi duran soluk yazı rengi */
+
+    /* Görev aciliyet renkleri */
+    --priority-dusuk: #10b981;
+    --priority-dusuk-dim: rgba(16, 185, 129, 0.15);
+    /* Butonlarda vs arka planı boğmasın diye şeffaf hali */
+
+    --priority-normal: #f59e0b;
+    --priority-normal-dim: rgba(245, 158, 11, 0.15);
+
+    --priority-acil: #ef4444;
+    --priority-acil-dim: rgba(239, 68, 68, 0.15);
+
+    --input-bg: rgba(15, 23, 42, 0.6);
+    --input-border: rgba(255, 255, 255, 0.1);
+
+    /* Köşe ovallikleri */
+    --radius-lg: 16px;
+    --radius-md: 12px;
+    --radius-sm: 8px;
+
+    /* Animasyon geçiş süreleri. Bounce olan o zıplama efekti için lazım */
+    --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Beyaz tema için renkler. Karanlık modu sevmeyen tuhaf tipler için eklendi sjhjsh */
+body.light-mode {
+    --bg-base: #f0f4f8;
+    --bg-gradient: radial-gradient(circle at top left, #e0e7ff 0%, #f0f4f8 60%);
+
+    --glass-bg: rgba(255, 255, 255, 0.6);
+    --glass-border: rgba(255, 255, 255, 1);
+    --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+
+    --primary: #4f46e5;
+    --primary-hover: #4338ca;
+
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+
+    --input-bg: rgba(255, 255, 255, 0.8);
+    --input-border: rgba(0, 0, 0, 0.05);
+}
+
+/* Klasik CSS sıfırlaması. Bunu yapmazsan tarayıcılar kafasına göre her yere boşluk bırakıyor. */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Sitenin ana iskeleti */
+body {
+    font-family: 'Outfit', sans-serif;
+    background-color: var(--bg-base);
+    background-image: var(--bg-gradient);
+    background-attachment: fixed;
+    color: var(--text-main);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 2rem 1rem;
+    transition: background-color var(--transition-fast), color var(--transition-fast);
+    line-height: 1.5;
+}
+
+/* Windows'un o iğrenç gri kaydırma çubuğunu (scrollbar) gizleyip kendi şekilli çubuğumu yaptım */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--glass-border);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
+}
+
+/* Sayfayı ortalayan ana kutu. Sayfa yenilenince alttan kayarak gelme (fadeUp) animasyonu verdim, efso duruyor. */
+.app-container {
+    width: 100%;
+    max-width: 720px;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* O meşhur cam efekti (Glassmorphism). Arka planı bulanıklaştıran asıl sihir burda. */
+.glass {
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    /* Safari için illa webkit yazmak gerekiyor ucube tarayıcı */
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--glass-shadow);
+}
+
+/* Logoyla adımızın yazdığı en tepedeki bar */
+.top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+/* İkonun içini o mor/pembe geçişli renkle doldurmak için background-clip olayını kullandım */
+.logo i {
+    font-size: 2.5rem;
+    background: linear-gradient(135deg, var(--primary), #a855f7);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 2px 8px var(--primary-glow));
+}
+
+.logo h1 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+}
+
+/* Gece modu ve çıkış yapma butonlarının tasarımı. Üstüne gelince hafif zıplayıp parlıyor. */
+.icon-btn {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    color: var(--text-main);
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    cursor: pointer;
+    transition: var(--transition-bounce);
+    outline: none;
+}
+
+.icon-btn:hover {
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+/* Toplam görev vs yazan istatistik kutusu */
+.stats-card {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Arkasında hafif parlayan bi ışık hüzmesi varmış gibi göstermek için */
+.stats-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.03) 0%, transparent 60%);
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.stats-grid {
+    display: flex;
+    gap: 2rem;
+}
+
+.stat {
+    display: flex;
+    flex-direction: column;
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1.1;
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Şov yaptığım kısımlardan biri, ilerleme çubuğu (progress bar) */
+.progress-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 0.5rem;
+}
+
+.progress-bar-container {
+    flex: 1;
+    height: 8px;
+    background: var(--input-bg);
+    border-radius: 99px;
+    overflow: hidden;
+    position: relative;
+}
+
+.progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), #a855f7);
+    border-radius: 99px;
+    transition: width 1s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+}
+
+/* İlerleme çubuğunun içine böyle kayan şeritler falan koydum, oyunlardaki can barı gibi oldu :) */
+.progress-bar::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    background: linear-gradient(-45deg,
+            rgba(255, 255, 255, 0.2) 25%,
+            transparent 25%,
+            transparent 50%,
+            rgba(255, 255, 255, 0.2) 50%,
+            rgba(255, 255, 255, 0.2) 75%,
+            transparent 75%,
+            transparent);
+    background-size: 20px 20px;
+    animation: moveStripes 1s linear infinite;
+    opacity: 0.5;
+}
+
+.progress-text {
+    font-weight: 600;
+    font-size: 0.9rem;
+    min-width: 40px;
+}
+
+/* Arama kutusu ve yazı yazdığımız inputların tasarımı */
+.search-box {
+    display: flex;
+    align-items: center;
+    padding: 0 1rem;
+    height: 54px;
+    transition: var(--transition-fast);
+}
+
+/* Kutuya tıklanınca dışındaki çerçeve parlasın diye */
+.search-box:focus-within {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px var(--primary-glow);
+}
+
+.search-icon {
+    font-size: 1.25rem;
+    color: var(--text-muted);
+    margin-right: 0.75rem;
+}
+
+/* Tarayıcının çirkin input stillerini eziyoruz */
+input[type="text"],
+input[type="date"],
+select {
+    background: transparent;
+    border: none;
+    color: var(--text-main);
+    font-family: inherit;
+    font-size: 1rem;
+    width: 100%;
+    outline: none;
+}
+
+input::placeholder {
+    color: var(--text-muted);
+}
+
+/* Chrome'un inputlarda otomatik doldurma yapınca arkaya attığı o sarı/mavi çirkin rengi siliyoruz. Bunu yazana kadar canım çıktı. */
+input:-webkit-autofill {
+    -webkit-box-shadow: 0 0 0 30px var(--input-bg) inset !important;
+    -webkit-text-fill-color: var(--text-main) !important;
+}
+
+/* Yeni görev ekleme alanımız */
+.task-form {
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.input-group {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.input-group input {
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
+    padding: 0.75rem 1.25rem;
+    border-radius: var(--radius-md);
+    transition: var(--transition-fast);
+}
+
+.input-group input:focus {
+    border-color: var(--primary);
+}
+
+/* "Ekle" butonu tasarımı. Üstüne gelince gölgesi falan büyüyor */
+.btn-primary {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 0 1.5rem;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: var(--transition-bounce);
+    box-shadow: 0 4px 14px var(--primary-glow);
+    white-space: nowrap;
+}
+
+.btn-primary:hover {
+    background: var(--primary-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px var(--primary-glow);
+}
+
+.btn-primary i {
+    font-size: 1.2rem;
+}
+
+.options-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.custom-select,
+.custom-date {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
+    border-radius: var(--radius-md);
+    padding: 0 1rem;
+    height: 44px;
+}
+
+.icon-left {
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    margin-right: 0.5rem;
+}
+
+.icon-right {
+    position: absolute;
+    right: 1rem;
+    color: var(--text-muted);
+    pointer-events: none;
+    /* İkona tıklanmasını engelledik yoksa dropdown açılmıyordu altından */
+}
+
+/* Select kutusunun o default çirkin okunu sildim, kendi ikonumu koymuştum html'de */
+select {
+    appearance: none;
+    cursor: pointer;
+    padding-right: 1.5rem;
+}
+
+select option {
+    background: #1e293b;
+    color: #fff;
+}
+
+body.light-mode select option {
+    background: #fff;
+    color: #0f172a;
+}
+
+/* Takvim (date) inputunun ikonunu beyaza çeviren filter */
+input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(0.6) sepia(1) hue-rotate(180deg) opacity(0.5);
+    cursor: pointer;
+}
+
+body.light-mode input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: none;
+    opacity: 0.6;
+}
+
+/* Görevlerin alt alta listelendiği kutular */
+.tasks-container {
+    position: relative;
+}
+
+.task-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+/* Görev kartlarının genel ayarları. Listeye girerken soldan kayma (slideIn) efektiyle giriyorlar. */
+.task-item {
+    display: flex;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    gap: 1rem;
+    transition: all var(--transition-bounce);
+    animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Kartların üstündeki action butonları (Tik vb) */
+.check-btn {
+    background: transparent;
+    border: none;
+    font-size: 1.8rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: var(--transition-bounce);
+    display: flex;
+}
+
+.check-btn:hover {
+    color: var(--primary);
+    transform: scale(1.1);
+}
+
+.check-btn.is-completed {
+    color: var(--priority-dusuk);
+}
+
+/* Silme (Çöp Kutusu) butonunu başta transparan yapıp gizledim, fareyle karta gelince (hover) kayarak çıkıyor çok iyi oldu. */
+.delete-btn {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--priority-acil);
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: var(--transition-fast);
+    opacity: 0;
+    transform: translateX(10px);
+}
+
+.task-item:hover .delete-btn {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.delete-btn:hover {
+    background: var(--priority-acil);
+    color: white;
+}
+
+/* Kartların solundaki o ince renkli çizgi (acilse kırmızı, normalse sarı vb) */
+.priority-border-acil {
+    border-left: 4px solid var(--priority-acil);
+}
+
+.priority-border-normal {
+    border-left: 4px solid var(--priority-normal);
+}
+
+.priority-border-dusuk {
+    border-left: 4px solid var(--priority-dusuk);
+}
+
+/* Karta hover atınca havaya kalkma detayı */
+.task-item:hover {
+    transform: translateY(-3px) scale(1.01);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    border-color: var(--primary);
+}
+
+.task-content {
+    flex: 1;
+}
+
+.task-text {
+    font-size: 1.05rem;
+    font-weight: 500;
+    transition: var(--transition-fast);
+    margin-bottom: 0.2rem;
+}
+
+/* Tamamlanmış görevlerin üstünü çiziyorum ve biraz transparan yapıyorum ki belli olsun bittiği */
+.task-item.completed .task-text {
+    text-decoration: line-through;
+    color: var(--text-muted);
+    opacity: 0.7;
+}
+
+.task-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+/* Normal, Acil falan yazan minik rozetler. Arka planları yazıyı boğmasın diye şeffaf renkli (dim). */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.2rem 0.6rem;
+    border-radius: 99px;
+    letter-spacing: 0.5px;
+}
+
+.badge-acil {
+    background: var(--priority-acil-dim);
+    color: var(--priority-acil);
+}
+
+.badge-normal {
+    background: var(--priority-normal-dim);
+    color: var(--priority-normal);
+}
+
+.badge-dusuk {
+    background: var(--priority-dusuk-dim);
+    color: var(--priority-dusuk);
+}
+
+.badge-date {
+    background: var(--glass-border);
+    color: var(--text-muted);
+}
+
+/* Liste bomboşsa ekranda hayalet gibi çıkan kutunun ayarları */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 2rem;
+    text-align: center;
+    color: var(--text-muted);
+    animation: fadeIn 0.5s ease;
+}
+
+.empty-icon-wrapper {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    background: linear-gradient(135deg, var(--text-muted), transparent);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    opacity: 0.5;
+}
+
+.empty-state p {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--text-main);
+    margin-bottom: 0.2rem;
+}
+
+/* Sağ alttan çıkan o başarılı/hata mesajlarının (toast) görünümü */
+.toast-container {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    z-index: 1000;
+}
+
+.toast {
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    color: var(--text-main);
+    padding: 1rem 1.5rem;
+    border-radius: var(--radius-md);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-weight: 500;
+    transform: translateX(120%);
+    /* Başta ekranın çok sağında gizli dursun diye */
+    opacity: 0;
+    transition: all var(--transition-bounce);
+}
+
+.toast.show {
+    transform: translateX(0);
+    /* JavaScript show classını ekleyince lap diye ekrana giriyor */
+    opacity: 1;
+}
+
+.toast i {
+    font-size: 1.5rem;
+}
+
+.toast-success i {
+    color: var(--priority-dusuk);
+}
+
+.toast-error i {
+    color: var(--priority-acil);
+}
+
+/* Bütün hareketli şeylerin keyframe ayarları. Bunlar olmazsa animasyonlar çalışmaz. */
+@keyframes fadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes moveStripes {
+    0% {
+        background-position: 0 0;
+    }
+
+    100% {
+        background-position: 40px 0;
+    }
+}
+
+/* Telefonda site patlamasın diye yazdığım media query'ler. Ekran daralınca alt alta alıyor falan. */
+@media (max-width: 600px) {
+    .options-group {
+        grid-template-columns: 1fr;
+    }
+
+    /* Mobilde hover yapamıyorsun malum parmakla giriyorsun, o yüzden çöp kutusunu mobilde hep görünür yaptım */
+    .delete-btn {
+        opacity: 1;
+        transform: none;
+    }
+
+    .toast-container {
+        left: 1rem;
+        right: 1rem;
+        bottom: 1rem;
+    }
+
+    .toast {
+        width: 100%;
+        transform: translateY(120%);
+    }
+
+    .toast.show {
+        transform: translateY(0);
+    }
+}
+
+/* Bizim 3 kolonlu meşhur Kanban tablosunun ayarları */
+.kanban-controls {
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-start;
+}
+
+@media (max-width: 800px) {
+    .kanban-controls {
+        flex-direction: column;
+    }
+
+    .search-box {
+        width: 100%;
+    }
+}
+
+.kanban-board {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    /* Kolonları ekran boyutuna göre otomatik genişletiyor flex grid sağolsun */
+    gap: 1.5rem;
+    margin-top: 1rem;
+    align-items: start;
+}
+
+.kanban-column {
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    min-height: 400px;
+}
+
+.column-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--glass-border);
+    padding-bottom: 0.75rem;
+}
+
+.column-header h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.sortable-list {
+    min-height: 300px;
+}
+
+/* Kartı fareyle sürüklerken arkada kalan o soluk izin stili. SortableJS bunu otomatik atıyor. */
+.sortable-ghost {
+    opacity: 0.4;
+    background: var(--primary-glow);
+}
+
+.drag-handle {
+    cursor: grab;
+    padding-right: 0.5rem;
+}
+
+.drag-handle:active {
+    cursor: grabbing;
+}

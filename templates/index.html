@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Görev Yöneticisi</title>
+
+    <!-- Font olarak Outfit kullandım, göze hoş geliyor -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- İkon kütüphanesi -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <!-- Kartları sürükleyip bırakmak için -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+
+    <!-- Mevcut stil dosyası -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+    <!-- Tasarımı biraz daha toparlamak için eklediğim stiller -->
+    <style>
+        :root {
+            --bg-light: #f3f4f6;
+            --bg-dark: #111827;
+            --text-light: #1f2937;
+            --text-dark: #f9fafb;
+            --glass-bg-light: rgba(255, 255, 255, 0.7);
+            --glass-bg-dark: rgba(31, 41, 55, 0.7);
+            --border-light: rgba(255, 255, 255, 0.3);
+            --border-dark: rgba(255, 255, 255, 0.1);
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-light);
+            color: var(--text-light);
+            transition: all 0.3s ease;
+            margin: 0;
+            padding: 20px;
+        }
+
+        body.light-mode {
+            background-color: var(--bg-light);
+            color: var(--text-light);
+        }
+
+        body:not(.light-mode) {
+            background-color: var(--bg-dark);
+            color: var(--text-dark);
+        }
+
+        .glass {
+            background: var(--glass-bg-light);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid var(--border-light);
+            border-radius: 16px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        body:not(.light-mode) .glass {
+            background: var(--glass-bg-dark);
+            border: 1px solid var(--border-dark);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        .app-container {
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 24px;
+            border-radius: 16px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.5rem;
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        .kanban-controls {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .task-form,
+        .search-box {
+            display: flex;
+            padding: 16px;
+            gap: 12px;
+            align-items: center;
+        }
+
+        input,
+        select {
+            padding: 10px 16px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            outline: none;
+            font-family: inherit;
+            background: transparent;
+            color: inherit;
+        }
+
+        body:not(.light-mode) input,
+        body:not(.light-mode) select {
+            border-color: #4b5563;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.2s;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .icon-btn {
+            background: transparent;
+            border: none;
+            color: inherit;
+            cursor: pointer;
+            font-size: 1.2rem;
+            padding: 8px;
+            border-radius: 50%;
+            transition: background 0.2s;
+        }
+
+        .icon-btn:hover {
+            background: rgba(156, 163, 175, 0.2);
+        }
+
+        .kanban-board {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+            align-items: start;
+        }
+
+        .kanban-column {
+            padding: 20px;
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .column-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            border-bottom: 2px solid rgba(156, 163, 175, 0.2);
+            padding-bottom: 12px;
+        }
+
+        .badge {
+            background: var(--primary);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+        }
+
+        .task-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            min-height: 100px;
+        }
+
+        .task-item {
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: transform 0.2s;
+            background: var(--glass-bg-light);
+        }
+
+        body:not(.light-mode) .task-item {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .task-item:hover {
+            transform: translateY(-2px);
+        }
+
+        .toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 50;
+        }
+
+        .toast {
+            padding: 12px 20px;
+            border-radius: 8px;
+            background: white;
+            color: #111827;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 8px;
+            background: rgba(156, 163, 175, 0.3);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: var(--primary);
+            transition: width 0.4s ease;
+        }
+    </style>
+</head>
+
+<body class="light-mode">
+
+    <div class="app-container" style="max-width: 1200px;">
+
+        <!-- Üst menü -->
+        <header class="top-bar glass">
+            <div class="logo">
+                <i class="ph-fill ph-check-square-offset"></i>
+                <span>TaskFlow</span>
+            </div>
+            <div style="display: flex; gap: 1rem; align-items: center;">
+                <!-- Kullanıcı adı -->
+                <span style="font-weight: 500;"><i class="ph ph-user"></i> {{ current_user.username }}</span>
+
+                <!-- Tema değiştirme butonu -->
+                <button id="theme-toggle" class="icon-btn" onclick="toggleTheme()" aria-label="Temayı Değiştir">
+                    <i class="ph ph-moon"></i>
+                </button>
+
+                <!-- Çıkış butonu -->
+                <a href="/logout" class="icon-btn" aria-label="Çıkış Yap">
+                    <i class="ph ph-sign-out"></i>
+                </a>
+            </div>
+        </header>
+
+        <!-- İstatistikler ve ilerleme çubuğu -->
+        <div class="stats-card glass" style="padding: 20px;">
+            <div style="display: flex; gap: 24px; margin-bottom: 12px;">
+                <div>
+                    <span id="stat-total" style="font-size: 1.5rem; font-weight: 700;">0</span>
+                    <span style="font-size: 0.9rem; opacity: 0.8;">Toplam Görev</span>
+                </div>
+                <div>
+                    <span id="stat-completed" style="font-size: 1.5rem; font-weight: 700;">0</span>
+                    <span style="font-size: 0.9rem; opacity: 0.8;">Tamamlanan</span>
+                </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div class="progress-bar-container">
+                    <div class="progress-bar" id="progress-bar" style="width: 0%"></div>
+                </div>
+                <span id="progress-text" style="font-weight: 600;">%0</span>
+            </div>
+        </div>
+
+        <!-- Yeni görev ekleme ve arama alanı -->
+        <div class="kanban-controls">
+            <form id="task-form" class="task-form glass" style="flex: 1;">
+                <div style="display: flex; gap: 12px; flex: 1;">
+                    <input type="text" id="task-content" placeholder="Yeni bir görev yazın..." required
+                        autocomplete="off" style="flex: 1;">
+
+                    <!-- Öncelik seçimi -->
+                    <select id="task-priority">
+                        <option value="Düşük">Düşük</option>
+                        <option value="Normal" selected>Normal</option>
+                        <option value="Acil">Acil</option>
+                    </select>
+
+                    <!-- Tarih seçici -->
+                    <input type="date" id="task-deadline">
+
+                    <button type="submit" class="btn-primary">
+                        <i class="ph ph-plus-circle"></i> Ekle
+                    </button>
+                </div>
+            </form>
+
+            <!-- Arama kutusu -->
+            <div class="search-box glass" style="flex: 0.4;">
+                <i class="ph ph-magnifying-glass"></i>
+                <input type="text" id="search-input" placeholder="Görevlerde ara..." style="flex: 1; border: none;">
+            </div>
+        </div>
+
+        <!-- Görevlerin durduğu 3 kolonlu alan -->
+        <div class="kanban-board">
+
+            <!-- Yapılacaklar kolonu -->
+            <div class="kanban-column glass">
+                <div class="column-header">
+                    <span>Yapılacaklar</span>
+                    <span class="badge" id="count-todo">0</span>
+                </div>
+                <ul id="list-todo" class="task-list sortable-list" data-status="todo"></ul>
+            </div>
+
+            <!-- Devam Edenler kolonu -->
+            <div class="kanban-column glass">
+                <div class="column-header">
+                    <span>Devam Edenler</span>
+                    <span class="badge" id="count-inprogress" style="background: var(--warning);">0</span>
+                </div>
+                <ul id="list-in_progress" class="task-list sortable-list" data-status="in_progress"></ul>
+            </div>
+
+            <!-- Tamamlananlar kolonu -->
+            <div class="kanban-column glass">
+                <div class="column-header">
+                    <span>Tamamlananlar</span>
+                    <span class="badge" id="count-done" style="background: var(--success);">0</span>
+                </div>
+                <ul id="list-done" class="task-list sortable-list" data-status="done"></ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sağ alttaki bildirim baloncuğu için alan -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <script>
+        // Tema ayarları
+        const toggleBtn = document.getElementById('theme-toggle');
+        const icon = toggleBtn.querySelector('i');
+
+        // Temayı değiştir
+        function toggleTheme() {
+            document.body.classList.toggle('light-mode');
+            const isLight = document.body.classList.contains('light-mode');
+
+            // Seçilen temayı tarayıcıya kaydediyoruz
+            if (isLight) {
+                icon.classList.remove('ph-moon');
+                icon.classList.add('ph-sun');
+                localStorage.setItem('theme', 'light');
+            } else {
+                icon.classList.remove('ph-sun');
+                icon.classList.add('ph-moon');
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        // Sayfa açıldığında kayıtlı temayı yükle
+        if (localStorage.getItem('theme') === 'dark') {
+            document.body.classList.remove('light-mode');
+            icon.classList.replace('ph-moon', 'ph-sun');
+        }
+
+        // Bildirim baloncuğu
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+
+            // Duruma göre ikon seçimi
+            const iconClass = type === 'success' ? 'ph-check-circle' : 'ph-warning-circle';
+            toast.innerHTML = `<i class="ph ${iconClass}" style="color: ${type === 'success' ? '#10b981' : '#ef4444'}; font-size: 1.2rem;"></i> <span style="font-weight: 500;">${message}</span>`;
+
+            container.appendChild(toast);
+
+            // Bildirimin ekranda kalma süresi
+            setTimeout(() => toast.classList.add('show'), 10);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Sürükle bırak için kolonları ayarlıyoruz
+        ['todo', 'in_progress', 'done'].forEach(status => {
+            new Sortable(document.getElementById(`list-${status}`), {
+                group: 'kanban',
+                animation: 150,
+                handle: '.drag-handle',
+                ghostClass: 'sortable-ghost',
+                onEnd: async function (evt) {
+                    // Kart bırakıldığında çalışır
+                    const itemEl = evt.item;
+                    const taskId = itemEl.dataset.id;
+                    const newStatus = evt.to.dataset.status;
+                    const oldStatus = evt.from.dataset.status;
+
+                    // Durum değiştiyse backend'e bildir
+                    if (newStatus !== oldStatus) {
+                        try {
+                            const res = await fetch(`/api/update_status/${taskId}`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ status: newStatus })
+                            });
+                            const data = await res.json();
+                            if (data.success) {
+                                showToast('Görev durumu güncellendi');
+                                fetchTasks(document.getElementById('search-input').value);
+                            }
+                        } catch (err) {
+                            showToast('Durum güncellenemedi', 'error');
+                            fetchTasks(document.getElementById('search-input').value);
+                        }
+                    }
+                }
+            });
+        });
+
+        // Görevleri backend'den çekiyoruz
+        async function fetchTasks(searchQuery = '') {
+            try {
+                const res = await fetch(`/api/tasks?search=${encodeURIComponent(searchQuery)}`);
+                const data = await res.json();
+                renderTasks(data.tasks);
+                updateStats(data.stats);
+            } catch (err) {
+                showToast('Görevler yüklenirken hata oluştu', 'error');
+            }
+        }
+
+        // Görevleri ekrana basıyoruz
+        function renderTasks(tasks) {
+            const lists = {
+                'todo': document.getElementById('list-todo'),
+                'in_progress': document.getElementById('list-in_progress'),
+                'done': document.getElementById('list-done')
+            };
+            const counts = { 'todo': 0, 'in_progress': 0, 'done': 0 };
+
+            Object.values(lists).forEach(list => list.innerHTML = '');
+
+            tasks.forEach(task => {
+                const li = document.createElement('li');
+                li.dataset.id = task.id;
+
+                li.className = `task-item glass ${task.status === 'done' ? 'completed' : ''}`;
+
+                // Kartın içindeki HTML yapısı
+                li.innerHTML = `
+                <div style="display: flex; gap: 12px; align-items: center; width: 100%;">
+                    <div class="drag-handle" style="cursor:grab; color: #9ca3af;" title="Sürükle">
+                        <i class="ph ph-dots-six-vertical"></i>
+                    </div>
+                    <div style="flex: 1; ${task.status === 'done' ? 'opacity: 0.6;' : ''}">
+                        <p style="margin: 0 0 8px 0; font-weight: 500; ${task.status === 'done' ? 'text-decoration: line-through;' : ''}">${task.content}</p>
+                        <div style="display: flex; gap: 8px; font-size: 0.8rem;">
+                            <span style="background: rgba(156, 163, 175, 0.2); padding: 2px 8px; border-radius: 8px;">
+                                <i class="ph-fill ph-flag"></i> ${task.priority}
+                            </span>
+                            ${task.deadline ? `
+                            <span style="background: rgba(156, 163, 175, 0.2); padding: 2px 8px; border-radius: 8px;">
+                                <i class="ph ph-calendar-blank"></i> ${task.deadline}
+                            </span>` : ''}
+                        </div>
+                    </div>
+                    <div style="display:flex; gap: 4px;">
+                        ${task.status === 'todo' ?
+                        `<button class="icon-btn" onclick="updateTaskStatus(${task.id}, 'in_progress')" style="color:var(--primary)"><i class="ph-fill ph-play-circle"></i></button>` : ''}
+                        
+                        ${task.status !== 'done' ?
+                        `<button class="icon-btn" onclick="updateTaskStatus(${task.id}, 'done')" style="color:var(--success)"><i class="ph-fill ph-check-circle"></i></button>` : ''}
+                        
+                        ${task.status === 'done' ?
+                        `<button class="icon-btn" onclick="updateTaskStatus(${task.id}, 'todo')"><i class="ph-bold ph-arrow-counter-clockwise"></i></button>` : ''}
+                        
+                        <button class="icon-btn" onclick="deleteTask(${task.id})" style="color:var(--danger);">
+                            <i class="ph ph-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+
+                // Kartların sırayla gelmesi için animasyon gecikmesi
+                li.style.animationDelay = `${Math.random() * 0.1}s`;
+
+                if (lists[task.status]) {
+                    lists[task.status].appendChild(li);
+                    counts[task.status]++;
+                }
+            });
+
+            // Kolonlardaki sayıları güncelle
+            document.getElementById('count-todo').textContent = counts['todo'];
+            document.getElementById('count-inprogress').textContent = counts['in_progress'];
+            document.getElementById('count-done').textContent = counts['done'];
+        }
+
+        // İlerleme çubuğunu doldur
+        function updateStats(stats) {
+            document.getElementById('stat-total').textContent = stats.total;
+            document.getElementById('stat-completed').textContent = stats.completed;
+            document.getElementById('progress-bar').style.width = `${stats.percent}%`;
+            document.getElementById('progress-text').textContent = `%${stats.percent}`;
+        }
+
+        // Yeni görevi backend'e yolla
+        document.getElementById('task-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const content = document.getElementById('task-content').value;
+            const priority = document.getElementById('task-priority').value;
+            const deadline = document.getElementById('task-deadline').value;
+
+            try {
+                const res = await fetch('/api/add', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ task: content, priority, deadline })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    showToast('Görev başarıyla eklendi!', 'success');
+                    document.getElementById('task-content').value = '';
+                    document.getElementById('task-deadline').value = '';
+                    fetchTasks(document.getElementById('search-input').value);
+                } else {
+                    showToast(data.message, 'error');
+                }
+            } catch (err) {
+                showToast('Görev eklenemedi', 'error');
+            }
+        });
+
+        // Görev silme işlemi
+        async function deleteTask(id) {
+            try {
+                const res = await fetch(`/api/delete/${id}`, { method: 'DELETE' });
+                const data = await res.json();
+                if (data.success) {
+                    showToast('Görev silindi');
+                    fetchTasks(document.getElementById('search-input').value);
+                }
+            } catch (err) {
+                showToast('Silme işlemi başarısız', 'error');
+            }
+        }
+
+        // Görev durumu güncelleme
+        async function updateTaskStatus(id, newStatus) {
+            try {
+                const res = await fetch(`/api/update_status/${id}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: newStatus })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast('Görev durumu güncellendi');
+                    fetchTasks(document.getElementById('search-input').value);
+                }
+            } catch (err) {
+                showToast('Durum güncellenemedi', 'error');
+            }
+        }
+
+        // Arama yaparken her harfte istek atmasın diye biraz bekletiyoruz
+        let searchTimeout;
+        document.getElementById('search-input').addEventListener('input', (e) => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                fetchTasks(e.target.value);
+            }, 300);
+        });
+
+        // Sayfa yüklenince görevleri getir
+        document.addEventListener('DOMContentLoaded', () => fetchTasks());
+    </script>
+
+</body>
+
+</html>
